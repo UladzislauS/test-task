@@ -1,15 +1,13 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { UsersListComponent } from './components/users-list/users-list.component';
-import { UsersResolver } from './resolvers';
-import { PaginationResolver } from './resolvers/pagination.resolver';
+import { UsersResolver } from './resolvers/users.resolver';
 
-const routes: Routes = [
+export const routes: Routes = [
   {
     path: '',
     resolve: {
-      users: UsersResolver,
-      paginationInfo: PaginationResolver
+      users: UsersResolver
     },
     component: UsersListComponent
   }

@@ -1,47 +1,82 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { PageEvent } from '@angular/material';
 import { ActivatedRoute, Router } from '@angular/router';
-import { map } from 'rxjs/operators';
-import { UserInterface } from '../../../../interfaces';
-import { ApiService } from '../../../core/services';
+import { map, first } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+
+import { User, Users } from '../../../../interfaces';
+import { ApiService } from '../../../core/services/api.service';
 
 @Component({
   selector: 'app-users-list',
   templateUrl: './users-list.component.html',
   styleUrls: ['./users-list.component.css']
 })
-export class UsersListComponent implements OnInit {
+export class UsersListComponent implements OnInit, OnDestroy {
 
   displayedColumns = ['first_name', 'last_name', 'email'];
-  userList: any[] = [];
-  pagesCount: number;
+  userList: User[] = [];
+  usersCount: number;
+  currentPage: number;
 
-  constructor(private activatedRoute: ActivatedRoute,
-              private router: Router) {
-  }
+  subscriptions: Subscription[] = [];
+
+  constructor(
+    private activatedRoute: ActivatedRoute,
+    private apiService: ApiService,
+    private router: Router
+  ) {}
 
   ngOnInit() {
-    this.activatedRoute.data.pipe(
-      map(data => data.users)
-    )
-      .subscribe((users: UserInterface[]) => {
-        this.userList = users;
-      });
+    this.initializeRoute();
+    this.handlePagination();
+  }
 
-    this.activatedRoute.data.pipe(
-      map(data => data.paginationInfo)
-    )
-      .subscribe(paginationInfo => {
-        this.pagesCount = paginationInfo.total;
-      })
+  ngOnDestroy() {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
   pageChanged(event: PageEvent): void {
-    let page: number = event.pageIndex + 1;
-    this.router.navigate(['./'], { queryParams: { page } });
+    const page: number = event.pageIndex + 1;
+    this.router.navigate(['./'], {
+      queryParams: {
+        page
+      }
+    });
   }
 
-  userSelected(user: UserInterface): void {
+  userSelected(user: User): void {
     this.router.navigate(['./user', user.id]);
+  }
+
+  private initializeRoute(): void {
+    const routeDataSubscription = this.activatedRoute.data.pipe(
+        map(data => data.users)
+      )
+      .subscribe(users => this.setPageData(users));
+
+    this.subscriptions.push(routeDataSubscription);
+  }
+
+  private handlePagination(): void {
+    const routeParamsSubscription = this.activatedRoute.queryParams.subscribe(params => {
+      if (+params.page === this.currentPage) {
+        return;
+      }
+
+      this.apiService.fetchUsers(params.page)
+        .pipe(
+          first()
+        )
+        .subscribe(users => this.setPageData(users));
+    });
+
+    this.subscriptions.push(routeParamsSubscription);
+  }
+
+  private setPageData(users: Users): void {
+    this.userList = users.users;
+    this.currentPage = users.page;
+    this.usersCount = users.total;
   }
 }

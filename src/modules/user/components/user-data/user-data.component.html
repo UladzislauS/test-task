@@ -1,1 +1,7 @@
-<div>{{ user | json }}</div>
+<mat-card class="user-card" *ngIf="user">
+  <mat-card-header>
+    <img mat-card-avatar [attr.src]="user.avatar" alt="User Photo">
+    <mat-card-title>{{user.first_name + ' ' + user.last_name }}</mat-card-title>
+    <mat-card-subtitle>{{user.email}}</mat-card-subtitle>
+  </mat-card-header>
+</mat-card>

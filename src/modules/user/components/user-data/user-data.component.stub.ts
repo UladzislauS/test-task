@@ -3,12 +3,8 @@ import { User } from '../../../../interfaces';
 
 @Component({
   selector: 'app-user-data',
-  templateUrl: './user-data.component.html',
-  styleUrls: ['./user-data.component.css']
+  template: '',
 })
-export class UserDataComponent {
-
+export class UserDataStubComponent {
   @Input() user: User;
-
-  constructor() { }
 }
